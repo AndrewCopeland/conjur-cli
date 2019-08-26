@@ -38,7 +38,7 @@ So we have 2 safes syncing over 'AppTeam1Safe' & 'AppTeam1MyApp'.
 'AppTeam1Safe' will represent a general safe that contains secrets used by the CI/CD pipeline.
 'AppTeam1MyApp' will represent a safe for a specific application called 'MyApp'.
 
-Now lets create our namesapce
+Now lets create our namespace
 
 ```
 root@6ca262d89186:/src/conjur-cli# conjur namespace create AppTeam1
@@ -195,6 +195,76 @@ Policy Branch 'AppTeam1'
   member: !group MyApp/safes
 ```
 
+
+## Namespaces Help
+```
+root@41c4d89aa17f:/src/conjur-cli# conjur namespace
+
+NAME
+    namespace - Manage namespaces
+
+SYNOPSIS
+    conjur [global options] namespace authn
+    conjur [global options] namespace create [--namespace arg|-n arg] [-y|--yaml]
+    conjur [global options] namespace list
+    conjur [global options] namespace open [--namespace arg|-n arg]
+    conjur [global options] namespace pwd
+    conjur [global options] namespace safe [--namespace arg|-n arg] [--safe arg|-s arg] [--yaml arg|-y arg]
+
+COMMANDS
+    authn  - Grant a namespace access to an authenticator service
+    create - Create a namespace
+    list   - List namespaces
+    open   - Open a namespace
+    pwd    - Present working namespace
+    safe   - Grant namespace access to a safe
+```
+
+## Enable Help
+```
+NAME
+    enable - Enable integrations
+
+SYNOPSIS
+    conjur [global options] enable ansible [-h host|--host host]
+    conjur [global options] enable authn
+    conjur [global options] enable jenkins [-h host|--host host]
+
+COMMANDS
+    ansible - Enable ansible integration
+    authn   - Enable an authenticator service
+    jenkins - Enable jenkins integration
+```
+
+## App help
+```
+NAME
+    app - Create applications in your namespace
+
+SYNOPSIS
+    conjur [global options] app create [-a arg|--app arg] [-y|--yaml]
+    conjur [global options] app list
+
+COMMANDS
+    create - Create an application within a namespace
+    list   - List applications
+```
+
+## Link Help
+```
+NAME
+    link - Link hosts and safes to apps
+
+SYNOPSIS
+    conjur [global options] link allsafes [-a arg|--app arg] [-y|--yaml]
+    conjur [global options] link host [-a arg|--app arg] [-h arg|--host arg] [-y|--yaml]
+    conjur [global options] link safe [-a arg|--app arg] [-s arg|--safe arg] [-y|--yaml]
+
+COMMANDS
+    allsafes - Link all safes to an application
+    host     - Link a host to an application
+    safe     - Link a safe to an app
+```
 
 ## Development
 
