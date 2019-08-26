@@ -6,7 +6,7 @@ Command-line interface for Conjur.
 
 A complete reference guide is available at [conjur.org](https://www.conjur.org).
 
-## Namespaces & more
+## Namespaces, Apps, Safes & more
 ```
 root@6ca262d89186:/src/conjur-cli# conjur list
 [
