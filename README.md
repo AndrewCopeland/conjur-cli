@@ -6,58 +6,265 @@ Command-line interface for Conjur.
 
 A complete reference guide is available at [conjur.org](https://www.conjur.org).
 
-## Quick start
+## Namespaces, Apps, Safes & more
+```
+root@6ca262d89186:/src/conjur-cli# conjur list
+[
 
-```sh-session
-$ gem install conjur-cli
-
-$ conjur -v
-conjur version 6.0.0
+]
 ```
 
-## Using Docker
-[![Docker Build Status](https://img.shields.io/docker/build/conjurinc/cli5.svg)](https://hub.docker.com/r/conjurinc/cli5/)
-This software is included in the standalone cyberark/conjur-cli:5 Docker image. Docker containers are designed to be ephemeral, which means they don't store state after the container exits.
-
-You can start an ephemeral session with the Conjur CLI software like so:
-```sh-session 
-$ docker run --rm -it cyberark/conjur-cli:5
-root@b27a95721e7d:~# 
+Currently nothing is in conjur, lets setup our syncronizer and start syncing secrets over from cyberark.
+```
+root@6ca262d89186:/src/conjur-cli# conjur list
+...
+  "cucumber:policy:vaultname/lob/AppTeam1Safe/delegation",
+  "cucumber:group:vaultname/lob/AppTeam1Safe/delegation/consumers",
+  "cucumber:policy:vaultname/lob/AppTeam1Safe/OracleDB",
+  "cucumber:variable:vaultname/lob/AppTeam1Safe/OracleDB/username",
+  "cucumber:variable:vaultname/lob/AppTeam1Safe/OracleDB/password",
+  "cucumber:policy:vaultname/lob/AppTeam1Safe/UnixSSHKey",
+  "cucumber:variable:vaultname/lob/AppTeam1Safe/UnixSSHKey/username",
+  "cucumber:variable:vaultname/lob/AppTeam1Safe/UnixSSHKey/password",
+  "cucumber:policy:vaultname/lob/AppTeam1MyApp/delegation",
+  "cucumber:group:vaultname/lob/AppTeam1MyApp/delegation/consumers",
+  "cucumber:policy:vaultname/lob/AppTeam1MyApp/MysqlMyApp",
+  "cucumber:variable:vaultname/lob/AppTeam1MyApp/MysqlMyApp/username",
+  "cucumber:variable:vaultname/lob/AppTeam1MyApp/MysqlMyApp/password"
+...
 ```
 
-Any initialization you do or files you create in that session will be discarded (permanently lost) when you exit the shell. Changes that you make to the Conjur server will remain.
+So we have 2 safes syncing over 'AppTeam1Safe' & 'AppTeam1MyApp'.
+'AppTeam1Safe' will represent a general safe that contains secrets used by the CI/CD pipeline.
+'AppTeam1MyApp' will represent a safe for a specific application called 'MyApp'.
 
-You can also use a folder on your filesystem to persist the data that the Conjur CLI uses to connect. For example:
-```sh-session
-$ mkdir mydata
-$ chmod 700 mydata
-$ docker run --rm -it -v $(PWD)/mydata:/root cyberark/conjur-cli:5 init -u https://eval.conjur.org
+Now lets create our namespace
 
-SHA1 Fingerprint=E6:F7:AC:E3:3A:54:83:4F:D0:06:9B:49:45:C3:85:58:ED:34:4C:4C
+```
+root@6ca262d89186:/src/conjur-cli# conjur namespace create AppTeam1
+Loading policy 'root'
+{
+  "created_roles": {
+    "cucumber:host:AppTeam1/srv": {
+      "id": "cucumber:host:AppTeam1/srv",
+      "api_key": "362sr9339pq59g32r89rf2n4tfyn1xxfhyx29fknw0qkjtwneh8v70"
+    }
+  },
+  "version": 1
+}
+```
 
-Please verify this certificate on the appliance using command:
-              openssl x509 -fingerprint -noout -in ~conjur/etc/ssl/conjur.pem
+A 'srv' host will be created in this namespace. (It is recommended to store the 'api_key' inside of the cyberark vault). 
+This host will be used within AppTeam1's CI/CD pipeline to fetch secrets from conjur, create hosts, create applications and link safes & hosts to applications.
 
-Trust this certificate (yes/no): yes
-Enter your organization account name: your.email@yourorg.net
-Wrote certificate to /root/conjur-your.email@yourorg.net.pem
-Wrote configuration to /root/.conjurrc
-$ ls -lA mydata
-total 16
-drwxr-xr-x  2 you  staff    68 Mar 29 14:16 .cache
--rw-r--r--  1 you  staff   136 Mar 29 14:16 .conjurrc
--rw-r--r--  1 you  staff  3444 Mar 29 14:16 conjur-your.email@yourorg.net.pem
-$ docker run --rm -it -v $(PWD)/mydata:/root cyberark/conjur-cli:5 authn login -u admin 
-Please enter admin's password (it will not be echoed): 
+Currently our namespace does not contain any apps, hosts and does not have permission to any safe. So we really cannot do much.
+We want to give a namespace access to a safe.
+An admin user or user with appropriate permissions must be used to grant safes to a namespace.
+To grant a namespace permissions to a safe perform the command below.
+
+```
+root@6ca262d89186:/src/conjur-cli# conjur namespace safe -n AppTeam1 -s AppTeam1Safe
+...
+root@6ca262d89186:/src/conjur-cli# conjur namespace safe -n AppTeam1 -s AppTeam1MyApp
+...
+
+```
+
+Now our namespace has access to safe AppTeam1Safe & AppTeam1MyApp.
+
+Lets login using our 'srv' account, open our namespace and create our first application.
+
+```
+root@6ca262d89186:/src/conjur-cli# conjur authn login
+Enter your username to log into Conjur: host/AppTeam1/srv
+Please enter your password (it will not be echoed):
 Logged in
-$ ls -lA mydata
-total 24
-drwxr-xr-x  2 you  staff    68 Mar 29 14:16 .cache
--rw-r--r--  1 you  staff   136 Mar 29 14:16 .conjurrc
--rw-------  1 you  staff   119 Mar 29 14:19 .netrc
--rw-r--r--  1 you  staff  3444 Mar 29 14:16 conjur-your.email@yourorg.net.pem
+root@6ca262d89186:/src/conjur-cli# conjur namespace open AppTeam1
+Opened namespace 'AppTeam1'
+root@6ca262d89186:/src/conjur-cli# conjur app create MyApp
+Loading policy 'AppTeam1'
+{
+  "created_roles": {
+  },
+  "version": 3
+}
 ```
-*Security notice:* the file `.netrc`, created or updated by `conjur authn login`, contains a user identity credential that can be used to access the Conjur API. You should remove it after use or otherwise secure it like you would another netrc file.
+
+We created the application but it does not have any hosts or safes, lets create a host.
+
+```
+root@6ca262d89186:/src/conjur-cli# conjur host create authn MyApp.AppTeam1.comany.local
+Loading policy 'AppTeam1'
+{
+  "created_roles": {
+    "cucumber:host:AppTeam1/MyApp.AppTeam1.comany.local": {
+      "id": "cucumber:host:AppTeam1/MyApp.AppTeam1.comany.local",
+      "api_key": "3tpvcw9ageayf3p7zfv129xgjwq3dqvc353zw4k611tqa8w31kw3b26"
+    }
+  },
+  "version": 4
+}
+```
+
+Now link the host to our application.
+```
+root@6ca262d89186:/src/conjur-cli# conjur link host --host MyApp.AppTeam1.comany.local --app MyApp
+Loading policy 'AppTeam1'
+{
+  "created_roles": {
+  },
+  "version": 5
+}
+```
+
+Finally lets link our safe (AppTeam1MyApp) to our application.
+```
+root@6ca262d89186:/src/conjur-cli# conjur link safe --safe AppTeam1MyApp --app MyApp
+Loading policy 'AppTeam1'
+{
+  "created_roles": {
+  },
+  "version": 6
+}
+```
+
+
+Now lets login as our application host and verify our host only has access to the secrets it requires.
+
+```
+root@6ca262d89186:/src/conjur-cli# conjur authn login
+Enter your username to log into Conjur: host/AppTeam1/MyApp.AppTeam1.comany.local
+Please enter your password (it will not be echoed):
+Logged in
+root@6ca262d89186:/src/conjur-cli#
+root@6ca262d89186:/src/conjur-cli#
+root@6ca262d89186:/src/conjur-cli# conjur list
+[
+  "cucumber:variable:vaultname/lob/AppTeam1MyApp/MysqlMyApp/username",
+  "cucumber:variable:vaultname/lob/AppTeam1MyApp/MysqlMyApp/password"
+]
+```
+
+
+Awesome! Our host only has the secrets it requires and nothing more.
+
+
+All of the commands above load policies and typically we want to store our policy in source control so it can be managed and updated easily.
+Instead of loading the policies directly you can use the '--yaml' flag to display the policy instead of actually loading policy.
+Examples below:
+
+Policy loaded when creating an application.
+```
+root@6ca262d89186:/src/conjur-cli# conjur app create --yaml example
+Policy Branch 'AppTeam1'
+---
+# create a owner group of the app being created
+- !group app_example
+
+- !grant
+  role: !group app_example
+  member: !group apps
+
+# create the app policy
+- !policy
+  id: example
+  owner: !group app_example
+  annotations:
+    clitype: csasaapp
+
+  body:
+  # this group will have read & execute permissions on all safes linked to this app
+  - !group safes
+  # this group repersents all of the hosts for this app
+  - !group hosts
+
+  # all hosts members of the hosts group will have access to the safes linked to this application
+  - !grant
+    role: !group safes
+    member: !group hosts
+```
+
+
+Policy loaded when linking an app to a safe.
+```
+root@6ca262d89186:/src/conjur-cli# conjur link safe --yaml -a MyApp -s AppTeam1MyApp
+Policy Branch 'AppTeam1'
+---
+- !grant
+  role: !group safe_AppTeam1MyApp
+  member: !group MyApp/safes
+```
+
+
+## Namespaces Help
+```
+root@41c4d89aa17f:/src/conjur-cli# conjur namespace
+
+NAME
+    namespace - Manage namespaces
+
+SYNOPSIS
+    conjur [global options] namespace authn
+    conjur [global options] namespace create [--namespace arg|-n arg] [-y|--yaml]
+    conjur [global options] namespace list
+    conjur [global options] namespace open [--namespace arg|-n arg]
+    conjur [global options] namespace pwd
+    conjur [global options] namespace safe [--namespace arg|-n arg] [--safe arg|-s arg] [--yaml arg|-y arg]
+
+COMMANDS
+    authn  - Grant a namespace access to an authenticator service
+    create - Create a namespace
+    list   - List namespaces
+    open   - Open a namespace
+    pwd    - Present working namespace
+    safe   - Grant namespace access to a safe
+```
+
+## Enable Help
+```
+NAME
+    enable - Enable integrations
+
+SYNOPSIS
+    conjur [global options] enable ansible [-h host|--host host]
+    conjur [global options] enable authn
+    conjur [global options] enable jenkins [-h host|--host host]
+
+COMMANDS
+    ansible - Enable ansible integration
+    authn   - Enable an authenticator service
+    jenkins - Enable jenkins integration
+```
+
+## App help
+```
+NAME
+    app - Create applications in your namespace
+
+SYNOPSIS
+    conjur [global options] app create [-a arg|--app arg] [-y|--yaml]
+    conjur [global options] app list
+
+COMMANDS
+    create - Create an application within a namespace
+    list   - List applications
+```
+
+## Link Help
+```
+NAME
+    link - Link hosts and safes to apps
+
+SYNOPSIS
+    conjur [global options] link allsafes [-a arg|--app arg] [-y|--yaml]
+    conjur [global options] link host [-a arg|--app arg] [-h arg|--host arg] [-y|--yaml]
+    conjur [global options] link safe [-a arg|--app arg] [-s arg|--safe arg] [-y|--yaml]
+
+COMMANDS
+    allsafes - Link all safes to an application
+    host     - Link a host to an application
+    safe     - Link a safe to an app
+```
 
 ## Development
 
