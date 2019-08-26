@@ -2,7 +2,7 @@
 set -ex
 
 git add -A
-git commit -m "link"
+git commit -m "enable authn k8s"
 
 export COMPOSE_PROJECT_NAME=clirubydev
 

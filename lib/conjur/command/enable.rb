@@ -67,6 +67,30 @@ class Conjur::Command::Enable < Conjur::Command
                 load_policy(policy_id, policy, yaml)
             end
         end
+        a.desc "Enable a kubernetes authenticator service"
+        a.command :k8s do |k|
+            k.desc "Service ID"
+            k.flag [:s,:serviceid]
+
+            k.desc "Output policy yaml rather than loading"
+            k.switch [:y,:yaml]
+        
+            k.action do |global_options,options,args|
+                service_id = options[:serviceid] || args.pop()
+                yaml = options[:yaml] || false
+                
+                if service_id == nil
+                    exit_now! "authenticator service id was not provided"
+                end
+                
+                policy_id = 'root'
+                filename = 'integrations/enable-authn-k8s.yml'
+                file = open(filename).read
+                policy = file.gsub("{{ SERVICE_ID }}", service_id)
+
+                load_policy(policy_id, policy, yaml)
+            end
+        end
     end
       
       enable.desc "Enable ansible integration"
