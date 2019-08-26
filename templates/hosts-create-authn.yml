@@ -1,0 +1,6 @@
+---
+- !host {{ HOST_NAME }}
+
+- !grant
+  role: !group hosts
+  member: !host {{ HOST_NAME }}

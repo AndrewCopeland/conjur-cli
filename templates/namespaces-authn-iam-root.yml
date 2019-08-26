@@ -1,0 +1,6 @@
+---
+- !grant
+  roles:
+  - !group conjur/authn-iam/{{ SERVICE_ID }}/clients
+  members:
+  - !group {{ NAMESPACE }}/service_iam_{{ SERVICE_ID }}

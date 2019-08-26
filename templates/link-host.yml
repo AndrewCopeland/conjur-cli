@@ -1,0 +1,4 @@
+---
+- !grant
+  role: !group {{ APP_NAME }}/hosts
+  member: !host {{ HOST_ID }}

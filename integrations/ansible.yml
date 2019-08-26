@@ -1,0 +1,35 @@
+- !policy
+  id: ansible
+  annotations:
+    description: Conjur policy for Ansible
+    ansible: true
+  body:  
+    - !layer
+      id: ansible-hosts
+      annotations:
+        ansible: true
+    - !host
+      id: ansible-tower
+      annotations:
+        ansible: true
+    - !host-factory
+      id: ansible-hf
+      layers: [ !layer ansible-hosts ]
+    - &variables
+      - !variable
+        id: github_key
+        kind: ssh-key
+      - !variable
+        id: docker_username
+        kind: username
+      - !variable
+        id: docker_password
+        kind: password
+    - !permit
+      role: !layer ansible-hosts
+      privileges: [read, execute]
+      resources: *variables
+    - !permit
+      role: !host ansible-tower
+      privileges: [read, execute]
+      resources: *variables

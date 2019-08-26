@@ -1,0 +1,6 @@
+---
+- !group safe_{{ SAFE_NAME }}
+
+- !grant
+  role: !group safe_{{ SAFE_NAME }}
+  member: !group safes

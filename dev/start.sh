@@ -1,6 +1,9 @@
 #!/bin/bash
 set -ex
 
+git add -A
+git commit -m "link"
+
 export COMPOSE_PROJECT_NAME=clirubydev
 
 docker-compose build
@@ -32,4 +35,8 @@ echo ''
 echo ''
 set -x
 
+
+
+docker-compose exec cli gem install pry
+# docker-compose exec cli conjur authn login -u admin -p "$apikey"
 docker-compose exec cli bash

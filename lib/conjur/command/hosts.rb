@@ -74,6 +74,35 @@ class Conjur::Command::Hosts < Conjur::Command
         display host_layer_roles(host).map(&:identifier), options
       end
     end
+
+    hosts.desc "create a host"
+    hosts.command :create do |create| 
+      create.desc "create an authn host"
+      create.command :authn do |authn|
+        authn.desc "host name"
+        authn.flag [:hostname, :h]
+
+        authn.desc "Output policy yaml rathen than loading policy"
+        authn.flag [:yaml, :y]
+
+        authn.action do |global_options, options, args|
+          hostname = options[:hostname] || args[0]
+          hostname = hostname.to_s.strip
+          yaml = options[:yaml] || false
+          
+          if hostname.empty?
+            exit_now! "Host name was not provided"
+          end
+
+          policy_id = get_namespace(true)
+          filename = 'templates/hosts-create-authn.yml'
+          file = open(filename).read
+          policy = file.gsub("{{ HOST_NAME }}", hostname)
+
+          load_policy(policy_id, policy, yaml) 
+        end
+      end
+    end
   end
 
   def self.format_cidr(cidr)

@@ -210,6 +210,29 @@ module Conjur
         false
       end
 
+
+      def get_namespace(required=false)
+        begin
+          open(ENV["HOME"] + "/.conjur.namespace").read().delete("\n")
+        rescue
+          if required
+            exit_now! "Not in a conjur namespace"
+          end
+          nil
+        end
+      end
+
+      def load_policy(policy_id, policy, yaml=false)
+        if yaml
+          puts "Policy Branch '#{policy_id}'"
+          puts "#{policy}"
+        else
+          result = api.load_policy policy_id, policy
+          puts "Loading policy '#{policy_id}'"
+          puts JSON.pretty_generate(result)
+        end
+      end
+
     end
   end
 end

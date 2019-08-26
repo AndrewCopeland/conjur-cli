@@ -1,0 +1,34 @@
+# policy id needs to match the convention `conjur/authn-iam/<service ID>`
+- !policy
+  id: conjur/authn-iam/{{ SERVICE_ID }}
+  body:
+  - !webservice
+
+  - !group clients
+
+  - !permit
+    role: !group clients
+    privilege: [ read, authenticate ]
+    resource: !webservice
+
+# - !policy
+#   id: aws-portal
+#   body:
+#   # Create a layer to hold this application's hosts
+#   - !layer
+
+#   # The host ID is the AWS acct # & IAM role we wish to authenticate.
+#   - !host {{ AWS_ACCOUNT }}/{{ IAM_ROLE_NAME }}
+
+#   # Add our host into our layer
+#   - !grant
+#     role: !layer
+#     members:
+#     - !host {{ AWS_ACCOUNT }}/{{ IAM_ROLE_NAME }}
+
+# # add host to group authorized to call the authn-iam service
+# - !grant
+#   roles:
+#   - !group conjur/authn-iam/{{ SERVICE_ID }}/clients
+#   members:
+#   - !host aws-portal/{{ AWS_ACCOUNT }}/{{ IAM_ROLE_NAME }}

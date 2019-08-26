@@ -1,0 +1,4 @@
+---
+- !grant
+  role: !group safe_{{ SAFE_NAME }}
+  member: !group {{ APP_NAME }}/safes

@@ -1,0 +1,28 @@
+- !policy
+  id: jenkins
+  annotations:
+    description: Conjur policy for Jenkins
+    jenkins: true
+  body:  
+    - !host
+      id: <HOST>
+      annotations:
+        jenkins: true
+    - !layer
+      id: jenkins-frontend
+      annotations:
+        jenkins: true
+    - &variables
+      - !variable
+        id: github_key
+        kind: ssh-key
+      - !variable 
+        id: docker_username
+        kind: username
+      - !variable
+        id: docker_password
+        kind: password
+    - !permit
+      role: !host <HOST>
+      privileges: [read, execute] 
+      resources: *variables

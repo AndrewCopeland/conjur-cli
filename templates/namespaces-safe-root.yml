@@ -1,0 +1,3 @@
+- !grant
+  role: !group {{ CONSUMERS_GROUP }}
+  member: !group {{ NAMESPACE }}/safe_{{ SAFE_NAME }}

@@ -1,0 +1,25 @@
+---
+# create a owner group of the app being created
+- !group app_{{ APP_NAME }}
+
+- !grant
+  role: !group app_{{ APP_NAME }}
+  member: !group apps
+
+# create the app policy
+- !policy
+  id: {{ APP_NAME }}
+  owner: !group app_{{ APP_NAME }}
+  annotations:
+    clitype: csasaapp
+
+  body:
+  # this group will have read & execute permissions on all safes linked to this app
+  - !group safes
+  # this group repersents all of the hosts for this app
+  - !group hosts
+
+  # all hosts members of the hosts group will have access to the safes linked to this application
+  - !grant
+    role: !group safes
+    member: !group hosts
